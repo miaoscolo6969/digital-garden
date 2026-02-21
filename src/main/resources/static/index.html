@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Digital Garden 🌿</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Lora:italic,wght@0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <style>
+        :root { --primary: #2d5a27; --accent: #2ecc71; --bg: #fdfcf8; --text: #333; --shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        body { font-family: 'Inter', sans-serif; max-width: 850px; margin: 0 auto; padding: 20px; background: var(--bg); color: var(--text); line-height: 1.6; }
+        nav { display: flex; justify-content: center; gap: 25px; margin-bottom: 40px; padding: 20px; }
+        nav a { text-decoration: none; color: var(--text); font-weight: 600; cursor: pointer; transition: 0.3s; text-transform: uppercase; font-size: 0.85em; letter-spacing: 1px; }
+        nav a:hover { color: var(--accent); }
+        nav a.active-link { border-bottom: 2px solid var(--accent); }
+        .admin-link { color: #888; border: 1px solid #ddd; padding: 5px 12px; border-radius: 20px; font-size: 0.75em !important; }
+        .page { display: none; animation: fadeIn 0.4s ease-out; }
+        .active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .hero { text-align: center; padding: 40px 0; }
+        .hero h1 { font-family: 'Lora', serif; font-size: 3em; color: var(--primary); margin: 0; }
+        .stats-bar { display: flex; gap: 15px; margin-bottom: 30px; }
+        .stat-item { background: white; padding: 15px; border-radius: 12px; box-shadow: var(--shadow); flex: 1; text-align: center; border-top: 3px solid var(--primary); }
+        #search-bar { width: 100%; padding: 15px; border: 1px solid #eee; border-radius: 10px; font-size: 1em; box-shadow: var(--shadow); outline: none; margin-bottom: 25px; }
+        .note-card { background: white; margin-bottom: 20px; padding: 25px; border-radius: 12px; box-shadow: var(--shadow); }
+        .note-card h2 { margin: 10px 0; font-family: 'Lora', serif; color: var(--primary); }
+        .note-card small { color: #bbb; font-size: 0.8em; }
+    </style>
+</head>
+<body>
+<nav>
+    <a id="link-home" onclick="showPage('home')" class="active-link">Home</a>
+    <a id="link-garden" onclick="showPage('garden')">Il Giardino</a>
+    <a href="/login" class="admin-link">🔒 Scrivi Nota</a>
+</nav>
+
+<div id="home" class="page active">
+    <div class="hero">
+        <h1>My Digital Garden</h1>
+        <p>Un ecosistema di pensieri e frammenti di codice.</p>
+    </div>
+    <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: var(--shadow);">
+        <h3>Benvenuto</h3>
+        <p>Esplora liberamente la collezione di note. Per aggiungere contenuti, passa dall'area riservata.</p>
+        <button style="background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer;" onclick="showPage('garden')">Entra nel Giardino →</button>
+    </div>
+</div>
+
+<div id="garden" class="page">
+    <div class="stats-bar">
+        <div class="stat-item"><span>Note</span><strong id="stat-count">0</strong></div>
+        <div class="stat-item"><span>Ultimo aggiornamento</span><strong id="stat-date">-</strong></div>
+    </div>
+    <input type="text" id="search-bar" placeholder="🔍 Cerca tra i pensieri..." onkeyup="handleSearch()">
+    <div id="notes-list"></div>
+</div>
+
+<script>
+    let allNotes = [];
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('nav a').forEach(a => a.classList.remove('active-link'));
+        document.getElementById(pageId).classList.add('active');
+        if(document.getElementById('link-' + pageId)) document.getElementById('link-' + pageId).classList.add('active-link');
+        if(pageId === 'garden') loadNotes();
+    }
+    async function loadNotes() {
+        const res = await fetch('/api/notes');
+        allNotes = await res.json();
+        renderNotes(allNotes);
+        updateDashboard(allNotes);
+    }
+    function renderNotes(notes) {
+        const list = document.getElementById('notes-list');
+        list.innerHTML = '';
+        notes.sort((a, b) => b.id - a.id).forEach(n => {
+            list.innerHTML += `<div class="note-card"><small>${new Date(n.createdAt).toLocaleDateString()}</small><h2>${n.title}</h2><div>${marked.parse(n.content)}</div></div>`;
+        });
+    }
+    function handleSearch() {
+        const query = document.getElementById('search-bar').value.toLowerCase();
+        renderNotes(allNotes.filter(n => n.title.toLowerCase().includes(query)));
+    }
+    function updateDashboard(notes) {
+        document.getElementById('stat-count').innerText = notes.length;
+        if(notes.length > 0) document.getElementById('stat-date').innerText = new Date(notes[0].createdAt).toLocaleDateString();
+    }
+    window.onload = loadNotes;
+</script>
+</body>
+</html>

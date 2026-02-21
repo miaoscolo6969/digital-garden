@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel 🌿</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Lora:italic,wght@0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #2d5a27; --bg: #fdfcf8; }
+        body { font-family: 'Inter', sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; background: var(--bg); }
+        .editor-card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px dashed #2ecc71; }
+        input, textarea { width: 100%; margin-bottom: 15px; padding: 12px; border: 1px solid #eee; border-radius: 8px; box-sizing: border-box; font-family: inherit; }
+        button { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 600; margin-bottom: 10px; }
+        .btn-delete { background: #ff4d4f; margin-top: 5px; font-size: 0.8em; }
+        .note-item { background: #fff; padding: 15px; margin-top: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
+        .back-link { display: block; text-align: center; margin-top: 20px; color: #888; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="editor-card">
+    <h2>Crea un nuovo pensiero 🌿</h2>
+    <input type="text" id="title" placeholder="Titolo...">
+    <textarea id="content" rows="8" placeholder="Contenuto in Markdown..."></textarea>
+    <button onclick="saveNote()">Pubblica Nota</button>
+    <a href="/" class="back-link">← Esci e torna al Giardino</a>
+</div>
+
+<form action="/logout" method="post" style="margin-top: 20px;">
+    <button type="submit" style="background: #888; font-size: 0.8em;">Esci (Logout)</button>
+</form>
+
+<h3 style="margin-top: 40px;">Gestisci Note Esistenti</h3>
+<div id="admin-notes-list"></div>
+
+<script>
+    async function loadAdminNotes() {
+        const res = await fetch('/api/notes');
+        const notes = await res.json();
+        const list = document.getElementById('admin-notes-list');
+        list.innerHTML = '';
+        notes.sort((a,b) => b.id - a.id).forEach(n => {
+            list.innerHTML += `
+                    <div class="note-item">
+                        <span><strong>${n.title}</strong></span>
+                        <button class="btn-delete" style="width: auto;" onclick="deleteNote(${n.id})">Elimina</button>
+                    </div>`;
+        });
+    }
+
+    async function saveNote() {
+        const title = document.getElementById('title').value;
+        const content = document.getElementById('content').value;
+        const res = await fetch('/api/notes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, content })
+        });
+        if(res.ok) {
+            document.getElementById('title').value = '';
+            document.getElementById('content').value = '';
+            loadAdminNotes();
+        }
+    }
+
+    async function deleteNote(id) {
+        if(confirm("Sicuro di voler eliminare questa nota?")) {
+            await fetch('/api/notes/' + id, { method: 'DELETE' });
+            loadAdminNotes();
+        }
+    }
+
+
+    loadAdminNotes();
+</script>
+</body>
+</html>
