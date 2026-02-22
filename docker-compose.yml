@@ -1,17 +1,42 @@
 version: '3.8'
 
 services:
+  # IL DATABASE
   db:
     image: postgres:16
     container_name: digital_garden_db
+    restart: always
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: digital_garden
-    ports:
-      - "5432:5432"
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+
+  # LA TUA APP SPRING BOOT
+  app:
+    build: .
+    container_name: digital_garden_app
+    restart: always
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/digital_garden
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      - db
+
+  # IL PORTIERE (NGINX PROXY MANAGER)
+  nginx-proxy:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: nginx_proxy_manager
+    restart: always
+    ports:
+      - '80:80'   # Porta HTTP standard
+      - '81:81'   # Dashboard di gestione (qui configurerai il dominio)
+      - '443:443' # Porta HTTPS standard
+    volumes:
+      - ./nginx_data:/data
+      - ./nginx_letsencrypt:/etc/letsencrypt
 
 volumes:
-  db_data:
+  postgres_data:
