@@ -18,10 +18,14 @@ services:
     build: .
     container_name: digital_garden_app
     restart: always
+    ports:
+      - "8080:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/digital_garden
       SPRING_DATASOURCE_USERNAME: ${DB_USER}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      SPRING_SECURITY_USER_NAME: ${SPRING_SECURITY_USER_NAME}
+      SPRING_SECURITY_USER_PASSWORD: ${SPRING_SECURITY_USER_PASSWORD}
     depends_on:
       - db
 
@@ -31,9 +35,9 @@ services:
     container_name: nginx_proxy_manager
     restart: always
     ports:
-      - '80:80'   # Porta HTTP standard
-      - '81:81'   # Dashboard di gestione (qui configurerai il dominio)
-      - '443:443' # Porta HTTPS standard
+      - '80:80'
+      - '81:81'
+      - '443:443'
     volumes:
       - ./nginx_data:/data
       - ./nginx_letsencrypt:/etc/letsencrypt
